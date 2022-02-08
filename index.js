@@ -1,6 +1,6 @@
 const { Client, Intents, Collection, MessageEmbed } = require("discord.js");
 const swearWords = require("./Data/SwearWords.json");
-const botConfig = require("./botconfig.json");
+const botConfig = require("./botConfig.json");
 const fs = require("fs");
 const { REST } = require('@discordjs/rest');
 const { Routes } = require('discord-api-types/v9');
