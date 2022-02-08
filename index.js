@@ -73,7 +73,7 @@ client.once("ready", () => {
         let guildId = "866733770693541918";
         let clientId = "920673560580730920";
 
-        const rest = new REST({ version: '9' }).setToken(botConfig.token);
+        const rest = new REST({ version: '9' }).setToken(process.env.token);
 
         (async () => {
             try {
