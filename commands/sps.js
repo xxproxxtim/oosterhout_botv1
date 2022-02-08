@@ -6,70 +6,80 @@ module.exports.run = async (bot, message, args) => {
 
     var result = options[Math.floor( Math.random() * options.length)];
 
-    switch(args[0].toUpperCase()){
+    const categoryID = "920756970779205702";
 
-        case "STEEN":
+    if (message.channel == categoryID) {
 
-        switch(result){
-            case "steen":
-                message.channel.send(`Ik heb **${result}**, het is gelijk spel.`);
-            break;
+        switch(args[0].toUpperCase()){
 
-            case "papier":
-                message.channel.send(`Ik heb **${result}**, ik win!`);
-            break;
-
-            case "schaar":
-                message.channel.send(`Ik heb **${result}**, jij wint!`);
-            break;
-        }
-
-        break;
-
-        case "PAPIER":
-
+            case "STEEN":
+    
             switch(result){
                 case "steen":
-                    message.channel.send(`Ik heb **${result}**, jij win!`);
+                    message.channel.send(`Ik heb **${result}**, het is gelijk spel.`);
                 break;
     
                 case "papier":
-                    message.channel.send(`Ik heb **${result}**, het is gelijk spel!`);
+                    message.channel.send(`Ik heb **${result}**, ik win!`);
                 break;
     
                 case "schaar":
-                    message.channel.send(`Ik heb **${result}**, ik win!`);
-                break;
-            }
-        
-        break;
-
-        case "SCHAAR":
-
-            switch(result){
-                case "steen":
-                    message.channel.send(`Ik heb **${result}**, ik win!`);
-                break;
-    
-                case "papier":
                     message.channel.send(`Ik heb **${result}**, jij wint!`);
                 break;
-    
-                case "schaar":
-                    message.channel.send(`Ik heb **${result}**, het is gelijk spel!`);
-                break;
             }
-
-        break;
-
-        default:
-
-        return message.channel.send("Gebruik steen, papier of schaar.");
-
+    
+            break;
+    
+            case "PAPIER":
+    
+                switch(result){
+                    case "steen":
+                        message.channel.send(`Ik heb **${result}**, jij win!`);
+                    break;
+        
+                    case "papier":
+                        message.channel.send(`Ik heb **${result}**, het is gelijk spel!`);
+                    break;
+        
+                    case "schaar":
+                        message.channel.send(`Ik heb **${result}**, ik win!`);
+                    break;
+                }
+            
+            break;
+    
+            case "SCHAAR":
+    
+                switch(result){
+                    case "steen":
+                        message.channel.send(`Ik heb **${result}**, ik win!`);
+                    break;
+        
+                    case "papier":
+                        message.channel.send(`Ik heb **${result}**, jij wint!`);
+                    break;
+        
+                    case "schaar":
+                        message.channel.send(`Ik heb **${result}**, het is gelijk spel!`);
+                    break;
+                }
+    
+            break;
+    
+            default:
+    
+            return message.channel.send("Gebruik steen, papier of schaar.");
+    
+        }
+    
+    }else{
+        return message.channel.send("Gelieve dit command in <#920756970779205702> te doen.")
     }
 
 }
 
 module.exports.help = {
-    name: "sps"
+    name: "sps",
+    category: "general",
+    discription: "Speelt blad, steen, schaar."
 }

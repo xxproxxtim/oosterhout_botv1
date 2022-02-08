@@ -8,12 +8,17 @@ module.exports.run = async (client, message, args) => {
 
     if (message.channel.parentId == categoryID) {
 
+        var reason = args.join(" ");
+        if (!reason) return message.reply("Gelieve een reden te geven.");
+
         message.channel.delete();
 
         var ticketEmbed = new discord.MessageEmbed()
             .setTitle("Ticket, " + message.channel.name)
-            .setDescription("Deze ticket is gemarkeerd als **compleet**")
+            .setDescription(`De ticket ${message.channel.name} (${message.channel.id}) is gemarkeerd als **compleet**`)
+            .addField("Toevoeging", reason)
             .setTimestamp()
+            .setFooter(message.author.username)
         var ticketLogs = message.member.guild.channels.cache.find(channel => channel.name === "❗logs-ticket");
         if(!ticketLogs) return message.reply("Kanaal bestaat niet.");
 
@@ -26,5 +31,7 @@ module.exports.run = async (client, message, args) => {
 }
 
 module.exports.help = {
-    name: "close"
+    name: "close",
+    category: "staff",
+    discription: "Sluit een ticket."
 }

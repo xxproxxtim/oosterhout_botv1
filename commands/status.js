@@ -20,5 +20,7 @@ module.exports.run = async (client, message, args) => {
 }
 
 module.exports.help = {
-    name: "status"
+    name: "status",
+    category: "staff",
+    discription: "Veranderd de status van de bot voor 60 sec."
 }

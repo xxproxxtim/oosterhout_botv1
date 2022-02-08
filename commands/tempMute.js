@@ -55,5 +55,7 @@ module.exports.run = async (client, message, args) => {
 }
 
 module.exports.help = {
-    name: "tempMute"
+    name: "tempMute",
+    category: "staff",
+    discription: "Geeft de gebruiken een tempMute."
 }

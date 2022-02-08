@@ -1,12 +1,18 @@
-const { Client, Intents, Collection } = require("discord.js");
+const { Client, Intents, Collection, MessageEmbed } = require("discord.js");
+const swearWords = require("./Data/SwearWords.json");
 const botConfig = require("./botconfig.json");
 const fs = require("fs");
-
+const { REST } = require('@discordjs/rest');
+const { Routes } = require('discord-api-types/v9');
+const levelFile = require("./Data/levels.json");
 const tempMute = JSON.parse(fs.readFileSync("./tempMutes.json", "utf8"));
 
-const client = new Client({ intents: [Intents.FLAGS.GUILDS, Intents.FLAGS.GUILD_MESSAGES, Intents.FLAGS.GUILD_MEMBERS, Intents.FLAGS.GUILD_PRESENCES] });
+const client = new Client({ intents: [Intents.FLAGS.GUILDS, Intents.FLAGS.GUILD_MESSAGES, Intents.FLAGS.GUILD_MEMBERS, Intents.FLAGS.GUILD_PRESENCES, Intents.FLAGS.GUILD_MESSAGE_REACTIONS] });
 
 client.commands = new Collection();
+client.slashCommands = new Collection();
+
+const slashCommands = [];
 
 const commandFiles = fs.readdirSync('./commands').filter(file => file.endsWith(".js"));
 
@@ -20,12 +26,27 @@ for (const file of commandFiles) {
 
 }
 
+const commandSlashFiles = fs.readdirSync('./slashCommands').filter(file => file.endsWith(".js"));
+
+for (const fileSlash of commandSlashFiles) {
+
+    const commandSlash = require(`./slashCommands/${fileSlash}`);
+
+    client.slashCommands.set(commandSlash.data.name, commandSlash);
+    slashCommands.push(commandSlash.data.toJSON());
+
+    console.log(`${commandSlash.data.name}.js is geladen.`);
+
+}
+
 client.once("ready", () => {
+
+    var members = client.guilds.cache.map((g) => g.memberCount).reduce((a, c) => a + c);
 
     console.log(`Oosterhout_bot is online.`);
     const statusOptions = [
-        `Oosterhout!`,
-        "niks"
+        `${members} leden`,
+        'Oosterhout'
     ]
 
     let counter = 0;
@@ -48,6 +69,26 @@ client.once("ready", () => {
         if (++counter >= statusOptions.length) counter = 0;
 
         setTimeout(updateStatus, time);
+
+        let guildId = "866733770693541918";
+        let clientId = "920673560580730920";
+
+        const rest = new REST({ version: '9' }).setToken(botConfig.token);
+
+        (async () => {
+            try {
+                console.log('Started refreshing application (/) commands.');
+
+                await rest.put(
+                    Routes.applicationGuildCommands(clientId, guildId),
+                    { body: slashCommands },
+                );
+
+                console.log('Successfully reloaded application (/) commands.');
+            } catch (error) {
+                console.error(error);
+            }
+        })();
 
     }
 
@@ -92,7 +133,7 @@ client.once("ready", () => {
                     });
                 }
                 catch (err) {
-                    console.log(err + " Persoon kon niet geunmute worden wegens deze persoon niet meer op de server is");
+                    console.log(err + " Persoon kon niet geunmute worden wegens deze persoon niet meer op de server is.");
                 }
             }
         }
@@ -104,34 +145,53 @@ client.once("ready", () => {
 
 client.on("interactionCreate", async interaction => {
 
-    if (!interaction.isSelectMenu()) {
+    if (interaction.isSelectMenu()) {
+
+        // const { customId, values, member } = interaction;
+
+        if (customId === 'roles') {
+
+            const component = interaction.component;
+
+            const removed = component.options.filter((option) => {
+                return !values.includes(option.value)
+            });
+
+            for (var id of removed) {
+                member.roles.remove(id.value)
+            }
+
+            for (var id of values) {
+                member.roles.add(id)
+            }
+
+            interaction.reply({
+                content: "Rol(en) zijn geupdate.",
+                ephemeral: true
+            });
+
+        }
+    }
+    else if (interaction.isCommand()) {
+
+        const slashCommand = client.slashCommands.get(interaction.commandName);
+
+        if (!slashCommand) return;
+
+        try {
+
+            await slashCommand.execute(client, interaction);
+
+        } catch (err) {
+            await interaction.reply({ content: "Er is iets fout gelopen.", ephemeral: true });
+            console.log(err);
+        }
+
+    } else {
         return;
     }
 
-    const { customId, values, member } = interaction;
 
-    if (customId === 'roles') {
-
-        const component = interaction.component;
-
-        const removed = component.options.filter((option) => {
-            return !values.includes(option.value)
-        });
-
-        for (var id of removed) {
-            member.roles.remove(id.value)
-        }
-
-        for (var id of values) {
-            member.roles.add(id)
-        }
-
-        interaction.reply({
-            content: "Rol(en) zijn geupdate.",
-            ephemeral: true
-        });
-
-    }
 
 });
 
@@ -198,21 +258,82 @@ client.on("messageCreate", async message => {
 
     var command = messageArray[0];
 
-    if (!message.content.startsWith(prefix)) return;
+    RandomXp(message);
 
-    const commandData = client.commands.get(command.slice(prefix.length));
+    if (!message.content.startsWith(prefix)) {
 
-    if (!commandData) return;
+        var msg = message.content.toLocaleLowerCase();
 
-    var arguments = messageArray.slice(1);
+        for (let index = 0; index < swearWords.length; index++) {
+            const SwearWord = swearWords[index];
 
-    try {
-        await commandData.run(client, message, arguments);
-    } catch (error) {
-        console.log(error);
-        await message.reply("Er is een probleem opgetreden.");
+            if (msg.includes(SwearWord.toLocaleLowerCase())) {
+                message.delete();
+                return await message.author.send("Je mag niet vloeken!"), message.channel.send("Je mag niet vloeken!").then(msg => {
+                    setTimeout(() => {
+                        msg.delete()
+                    }, 3000);
+                });
+            }
+
+        }
+
+    }
+    else {
+        const commandData = client.commands.get(command.slice(prefix.length));
+
+        if (!commandData) return;
+
+        var arguments = messageArray.slice(1);
+
+        try {
+            await commandData.run(client, message, arguments);
+        } catch (error) {
+            console.log(error);
+            await message.reply("Er is een probleem opgetreden.");
+        }
     }
 
 });
 
-client.login(process.env.token);
+function RandomXp(message) {
+    var randomNumber = Math.floor(Math.random() * 15) + 1;
+
+    var userId = message.author.id;
+
+    if (!levelFile[userId]) {
+        levelFile[userId] =
+        {
+            xp: 0,
+            level: 0
+        }
+    }
+
+    levelFile[userId].xp += randomNumber;
+
+    var levelUser = levelFile[userId].level;
+    var xpUser = levelFile[userId].xp;
+
+    var nextLevelXp = levelUser * 300;
+
+    if (nextLevelXp == 0) nextLevelXp = 100;
+
+    if (xpUser >= nextLevelXp) {
+        levelFile[userId].level += 1;
+
+        fs.writeFile("./Data/levels.json", JSON.stringify(levelFile), err => {
+            if (err) console.log(err);
+        });
+
+        const xpChannel = message.member.guild.channels.cache.get("866736873648291910");
+
+        xpChannel.send(`${message.author} Je level is nu level ${levelFile[userId].level} geworden.`);
+    };
+
+    fs.writeFile("./Data/levels.json", JSON.stringify(levelFile), err => {
+        if (err) console.log(err);
+    });
+
+}
+
+client.login(botConfig.token);
